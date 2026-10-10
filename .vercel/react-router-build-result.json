@@ -1,0 +1,350 @@
+{
+  "buildManifest": {
+    "serverBundles": {
+      "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0": {
+        "id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+        "file": "build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    },
+    "routeIdToServerBundleId": {
+      "root": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/home": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/layanan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/booking": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/booking-sukses": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/cek-booking": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/logout": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/dashboard": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/booking": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/booking-detail": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/kalender": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/layanan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/jam-operasional": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/pengaturan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "app/root.tsx",
+        "path": "",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "layouts/public": {
+        "id": "layouts/public",
+        "parentId": "root",
+        "file": "app/layouts/public.tsx",
+        "config": {}
+      },
+      "routes/home": {
+        "id": "routes/home",
+        "parentId": "layouts/public",
+        "file": "app/routes/home.tsx",
+        "index": true,
+        "config": {}
+      },
+      "routes/layanan": {
+        "id": "routes/layanan",
+        "parentId": "layouts/public",
+        "file": "app/routes/layanan.tsx",
+        "path": "layanan",
+        "config": {}
+      },
+      "routes/booking": {
+        "id": "routes/booking",
+        "parentId": "layouts/public",
+        "file": "app/routes/booking.tsx",
+        "path": "booking",
+        "config": {}
+      },
+      "routes/booking-sukses": {
+        "id": "routes/booking-sukses",
+        "parentId": "layouts/public",
+        "file": "app/routes/booking-sukses.tsx",
+        "path": "booking/sukses",
+        "config": {}
+      },
+      "routes/cek-booking": {
+        "id": "routes/cek-booking",
+        "parentId": "layouts/public",
+        "file": "app/routes/cek-booking.tsx",
+        "path": "cek-booking",
+        "config": {}
+      },
+      "routes/login": {
+        "id": "routes/login",
+        "parentId": "root",
+        "file": "app/routes/login.tsx",
+        "path": "login",
+        "config": {}
+      },
+      "routes/admin/logout": {
+        "id": "routes/admin/logout",
+        "parentId": "root",
+        "file": "app/routes/admin/logout.tsx",
+        "path": "admin/logout",
+        "config": {}
+      },
+      "layouts/admin": {
+        "id": "layouts/admin",
+        "parentId": "root",
+        "file": "app/layouts/admin.tsx",
+        "config": {}
+      },
+      "routes/admin/dashboard": {
+        "id": "routes/admin/dashboard",
+        "parentId": "layouts/admin",
+        "file": "app/routes/admin/dashboard.tsx",
+        "path": "admin",
+        "config": {}
+      },
+      "routes/admin/booking": {
+        "id": "routes/admin/booking",
+        "parentId": "layouts/admin",
+        "file": "app/routes/admin/booking.tsx",
+        "path": "admin/booking",
+        "config": {}
+      },
+      "routes/admin/booking-detail": {
+        "id": "routes/admin/booking-detail",
+        "parentId": "layouts/admin",
+        "file": "app/routes/admin/booking-detail.tsx",
+        "path": "admin/booking/:id",
+        "config": {}
+      },
+      "routes/admin/kalender": {
+        "id": "routes/admin/kalender",
+        "parentId": "layouts/admin",
+        "file": "app/routes/admin/kalender.tsx",
+        "path": "admin/kalender",
+        "config": {}
+      },
+      "routes/admin/layanan": {
+        "id": "routes/admin/layanan",
+        "parentId": "layouts/admin",
+        "file": "app/routes/admin/layanan.tsx",
+        "path": "admin/layanan",
+        "config": {}
+      },
+      "routes/admin/jam-operasional": {
+        "id": "routes/admin/jam-operasional",
+        "parentId": "layouts/admin",
+        "file": "app/routes/admin/jam-operasional.tsx",
+        "path": "admin/jam-operasional",
+        "config": {}
+      },
+      "routes/admin/pengaturan": {
+        "id": "routes/admin/pengaturan",
+        "parentId": "layouts/admin",
+        "file": "app/routes/admin/pengaturan.tsx",
+        "path": "admin/pengaturan",
+        "config": {}
+      }
+    }
+  },
+  "reactRouterConfig": {
+    "appDirectory": "C:/Users/Administrator/belleza-salon/app",
+    "basename": "/",
+    "buildDirectory": "C:/Users/Administrator/belleza-salon/build",
+    "future": {
+      "unstable_enableNodeReadableStream": false,
+      "unstable_optimizeDeps": false
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "root.tsx",
+        "path": ""
+      },
+      "layouts/public": {
+        "id": "layouts/public",
+        "parentId": "root",
+        "file": "layouts/public.tsx"
+      },
+      "routes/home": {
+        "id": "routes/home",
+        "parentId": "layouts/public",
+        "file": "routes/home.tsx",
+        "index": true
+      },
+      "routes/layanan": {
+        "id": "routes/layanan",
+        "parentId": "layouts/public",
+        "file": "routes/layanan.tsx",
+        "path": "layanan"
+      },
+      "routes/booking": {
+        "id": "routes/booking",
+        "parentId": "layouts/public",
+        "file": "routes/booking.tsx",
+        "path": "booking"
+      },
+      "routes/booking-sukses": {
+        "id": "routes/booking-sukses",
+        "parentId": "layouts/public",
+        "file": "routes/booking-sukses.tsx",
+        "path": "booking/sukses"
+      },
+      "routes/cek-booking": {
+        "id": "routes/cek-booking",
+        "parentId": "layouts/public",
+        "file": "routes/cek-booking.tsx",
+        "path": "cek-booking"
+      },
+      "routes/login": {
+        "id": "routes/login",
+        "parentId": "root",
+        "file": "routes/login.tsx",
+        "path": "login"
+      },
+      "routes/admin/logout": {
+        "id": "routes/admin/logout",
+        "parentId": "root",
+        "file": "routes/admin/logout.tsx",
+        "path": "admin/logout"
+      },
+      "layouts/admin": {
+        "id": "layouts/admin",
+        "parentId": "root",
+        "file": "layouts/admin.tsx"
+      },
+      "routes/admin/dashboard": {
+        "id": "routes/admin/dashboard",
+        "parentId": "layouts/admin",
+        "file": "routes/admin/dashboard.tsx",
+        "path": "admin"
+      },
+      "routes/admin/booking": {
+        "id": "routes/admin/booking",
+        "parentId": "layouts/admin",
+        "file": "routes/admin/booking.tsx",
+        "path": "admin/booking"
+      },
+      "routes/admin/booking-detail": {
+        "id": "routes/admin/booking-detail",
+        "parentId": "layouts/admin",
+        "file": "routes/admin/booking-detail.tsx",
+        "path": "admin/booking/:id"
+      },
+      "routes/admin/kalender": {
+        "id": "routes/admin/kalender",
+        "parentId": "layouts/admin",
+        "file": "routes/admin/kalender.tsx",
+        "path": "admin/kalender"
+      },
+      "routes/admin/layanan": {
+        "id": "routes/admin/layanan",
+        "parentId": "layouts/admin",
+        "file": "routes/admin/layanan.tsx",
+        "path": "admin/layanan"
+      },
+      "routes/admin/jam-operasional": {
+        "id": "routes/admin/jam-operasional",
+        "parentId": "layouts/admin",
+        "file": "routes/admin/jam-operasional.tsx",
+        "path": "admin/jam-operasional"
+      },
+      "routes/admin/pengaturan": {
+        "id": "routes/admin/pengaturan",
+        "parentId": "layouts/admin",
+        "file": "routes/admin/pengaturan.tsx",
+        "path": "admin/pengaturan"
+      }
+    },
+    "routeDiscovery": {
+      "mode": "lazy",
+      "manifestPath": "/__manifest"
+    },
+    "serverBuildFile": "index.js",
+    "serverModuleFormat": "esm",
+    "ssr": true,
+    "splitRouteModules": true,
+    "subResourceIntegrity": false,
+    "allowedActionOrigins": false,
+    "unstable_routeConfig": [
+      {
+        "id": "root",
+        "path": "",
+        "file": "root.tsx",
+        "children": [
+          {
+            "file": "layouts/public.tsx",
+            "children": [
+              {
+                "file": "routes/home.tsx",
+                "index": true
+              },
+              {
+                "file": "routes/layanan.tsx",
+                "path": "layanan"
+              },
+              {
+                "file": "routes/booking.tsx",
+                "path": "booking"
+              },
+              {
+                "file": "routes/booking-sukses.tsx",
+                "path": "booking/sukses"
+              },
+              {
+                "file": "routes/cek-booking.tsx",
+                "path": "cek-booking"
+              }
+            ]
+          },
+          {
+            "file": "routes/login.tsx",
+            "path": "login"
+          },
+          {
+            "file": "routes/admin/logout.tsx",
+            "path": "admin/logout"
+          },
+          {
+            "file": "layouts/admin.tsx",
+            "children": [
+              {
+                "file": "routes/admin/dashboard.tsx",
+                "path": "admin"
+              },
+              {
+                "file": "routes/admin/booking.tsx",
+                "path": "admin/booking"
+              },
+              {
+                "file": "routes/admin/booking-detail.tsx",
+                "path": "admin/booking/:id"
+              },
+              {
+                "file": "routes/admin/kalender.tsx",
+                "path": "admin/kalender"
+              },
+              {
+                "file": "routes/admin/layanan.tsx",
+                "path": "admin/layanan"
+              },
+              {
+                "file": "routes/admin/jam-operasional.tsx",
+                "path": "admin/jam-operasional"
+              },
+              {
+                "file": "routes/admin/pengaturan.tsx",
+                "path": "admin/pengaturan"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "viteConfig": {
+    "build": {
+      "assetsDir": "assets"
+    }
+  }
+}

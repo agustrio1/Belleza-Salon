@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+
+  --color-ivory: #fbf7f2;
+  --color-ivory-dark: #f3ece3;
+
+  --color-blush-50: #fbf1f0;
+  --color-blush-100: #f6e1df;
+  --color-blush-200: #ecc6c3;
+  --color-blush-400: #d49a9a;
+  --color-blush-500: #c58283;
+  --color-blush-600: #a96668;
+
+  --color-plum-500: #7a6475;
+  --color-plum-700: #54394f;
+  --color-plum-900: #2f1f2c;
+
+  --radius-card: 1rem;
+  --shadow-soft: 0 1px 2px rgb(47 31 44 / 0.04), 0 8px 24px rgb(47 31 44 / 0.06);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-ivory);
+    color: var(--color-plum-900);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-blush-600);
+    outline-offset: 2px;
+  }
+}

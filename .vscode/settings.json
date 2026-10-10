@@ -1,0 +1,6 @@
+{
+  // Tailwind CSS v4 at-rules (@theme, @plugin, @source, @custom-variant...)
+  // are not recognized by the built-in CSS linter. The "Tailwind CSS IntelliSense"
+  // extension (bradlc.vscode-tailwindcss) provides proper support for them.
+  "css.lint.unknownAtRules": "ignore"
+}
