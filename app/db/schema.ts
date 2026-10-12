@@ -1,9 +1,12 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   smallint,
   text,
   time,
@@ -62,6 +65,74 @@ export const services = pgTable("services", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Staf / terapis. Tidak ada hapus: staf hanya dinonaktifkan.
+export const staff = pgTable("staff", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  bio: text("bio").notNull().default(""),
+  photoMediaId: uuid("photo_media_id").references(() => media.id),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Layanan yang bisa ditangani tiap staf (many-to-many).
+export const staffServices = pgTable(
+  "staff_services",
+  {
+    staffId: uuid("staff_id")
+      .notNull()
+      .references(() => staff.id, { onDelete: "cascade" }),
+    serviceId: uuid("service_id")
+      .notNull()
+      .references(() => services.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.staffId, t.serviceId] }),
+    index("staff_services_service_idx").on(t.serviceId),
+  ]
+);
+
+// Jadwal kerja mingguan. Satu staf boleh punya beberapa rentang di hari yang sama
+// (istirahat = dua rentang). dayOfWeek: 0 = Minggu ... 6 = Sabtu, waktu lokal Asia/Jakarta.
+// Rentang yang saling tumpang tindih dicegah di aplikasi.
+export const staffWorkingHours = pgTable(
+  "staff_working_hours",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    staffId: uuid("staff_id")
+      .notNull()
+      .references(() => staff.id, { onDelete: "cascade" }),
+    dayOfWeek: smallint("day_of_week").notNull(),
+    startTime: time("start_time").notNull(),
+    endTime: time("end_time").notNull(),
+  },
+  (t) => [
+    index("staff_working_hours_staff_day_idx").on(t.staffId, t.dayOfWeek),
+    check("staff_working_hours_day_chk", sql`${t.dayOfWeek} between 0 and 6`),
+    check("staff_working_hours_range_chk", sql`${t.endTime} > ${t.startTime}`),
+  ]
+);
+
+// Cuti atau tidak masuk (seharian maupun sebagian hari).
+export const staffTimeOff = pgTable(
+  "staff_time_off",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    staffId: uuid("staff_id")
+      .notNull()
+      .references(() => staff.id, { onDelete: "cascade" }),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    reason: text("reason").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("staff_time_off_staff_starts_idx").on(t.staffId, t.startsAt),
+    check("staff_time_off_range_chk", sql`${t.endsAt} > ${t.startsAt}`),
+  ]
+);
+
 // dayOfWeek: 0 = Minggu ... 6 = Sabtu. Jam dalam waktu lokal Asia/Jakarta.
 export const businessHours = pgTable("business_hours", {
   dayOfWeek: smallint("day_of_week").primaryKey(),
@@ -87,6 +158,8 @@ export const bookings = pgTable(
     serviceId: uuid("service_id")
       .notNull()
       .references(() => services.id),
+    // Kosong untuk booking lama atau layanan yang belum punya staf aktif
+    staffId: uuid("staff_id").references(() => staff.id),
     // Snapshot saat booking dibuat
     serviceName: text("service_name").notNull(),
     price: integer("price").notNull(),
@@ -104,6 +177,7 @@ export const bookings = pgTable(
   (t) => [
     index("bookings_starts_at_idx").on(t.startsAt),
     index("bookings_status_idx").on(t.status),
+    index("bookings_staff_starts_idx").on(t.staffId, t.startsAt),
   ]
 );
 

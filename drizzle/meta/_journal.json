@@ -29,6 +29,20 @@
       "when": 1791622625411,
       "tag": "0003_media",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791773057778,
+      "tag": "0004_staff",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791773082638,
+      "tag": "0005_staff_booking_constraints",
+      "breakpoints": true
     }
   ]
 }
