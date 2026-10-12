@@ -16,6 +16,7 @@ export default [
 
   route("login", "routes/login.tsx"),
   route("admin/logout", "routes/admin/logout.tsx"),
+  route("admin/media-api", "routes/admin/media-api.ts"),
 
   layout("layouts/admin.tsx", [
     route("admin", "routes/admin/dashboard.tsx"),
@@ -23,6 +24,7 @@ export default [
     route("admin/booking/:id", "routes/admin/booking-detail.tsx"),
     route("admin/kalender", "routes/admin/kalender.tsx"),
     route("admin/layanan", "routes/admin/layanan.tsx"),
+    route("admin/media", "routes/admin/media.tsx"),
     route("admin/jam-operasional", "routes/admin/jam-operasional.tsx"),
     route("admin/pengaturan", "routes/admin/pengaturan.tsx"),
   ]),

@@ -26,6 +26,25 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Metadata gambar. File aslinya ada di Neon Object Storage (objectKey).
+export const media = pgTable(
+  "media",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(), // nama tampilan
+    objectKey: text("object_key").notNull().unique(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    altText: text("alt_text").notNull().default(""),
+    uploadedBy: uuid("uploaded_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("media_created_at_idx").on(t.createdAt)]
+);
+
 export const services = pgTable("services", {
   id: uuid("id").defaultRandom().primaryKey(),
   slug: text("slug").notNull().unique(),
@@ -33,7 +52,10 @@ export const services = pgTable("services", {
   description: text("description").notNull().default(""),
   price: integer("price").notNull(), // Rupiah, tanpa desimal
   durationMinutes: integer("duration_minutes").notNull(),
+  // Lama: URL langsung. Dipertahankan sebagai fallback selama migrasi.
   imageUrl: text("image_url"),
+  // Baru: gambar dari Media Library.
+  imageMediaId: uuid("image_media_id").references(() => media.id),
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

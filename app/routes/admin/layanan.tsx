@@ -2,9 +2,13 @@ import { Form, Link, redirect, useNavigation } from "react-router";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Route } from "./+types/layanan";
-import { db, services } from "~/db/index.server";
+import { db, media, services } from "~/db/index.server";
 import { requireAdmin } from "~/lib/session.server";
+import { mediaUrl } from "~/lib/media.server";
+import { serviceImageUrl } from "~/lib/service-image.server";
 import { formatRupiah } from "~/lib/time";
+import { MediaPicker } from "~/components/media-picker";
+import { ServiceImage } from "~/components/service-image";
 
 export function meta() {
   return [{ title: "Layanan — Admin Belleza" }];
@@ -16,14 +20,59 @@ export async function loader({ request }: Route.LoaderArgs) {
   await requireAdmin(request);
 
   const editParam = new URL(request.url).searchParams.get("edit") ?? "";
-  const list = await db
-    .select()
+
+  const rows = await db
+    .select({
+      id: services.id,
+      slug: services.slug,
+      name: services.name,
+      description: services.description,
+      price: services.price,
+      durationMinutes: services.durationMinutes,
+      sortOrder: services.sortOrder,
+      isActive: services.isActive,
+      imageUrl: services.imageUrl,
+      imageMediaId: services.imageMediaId,
+      mediaKey: media.objectKey,
+      mediaName: media.name,
+      mediaAlt: media.altText,
+    })
     .from(services)
+    .leftJoin(media, eq(services.imageMediaId, media.id))
     .orderBy(asc(services.sortOrder), asc(services.name));
 
+  const list = rows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    name: r.name,
+    price: r.price,
+    durationMinutes: r.durationMinutes,
+    sortOrder: r.sortOrder,
+    isActive: r.isActive,
+    thumb: serviceImageUrl(r.mediaKey, r.imageUrl),
+  }));
+
   const editId = idSchema.safeParse(editParam);
-  const editing = editId.success
-    ? (list.find((s) => s.id === editId.data) ?? null)
+  const editRow = editId.success ? rows.find((r) => r.id === editId.data) : undefined;
+
+  const editing = editRow
+    ? {
+        id: editRow.id,
+        name: editRow.name,
+        description: editRow.description,
+        price: editRow.price,
+        durationMinutes: editRow.durationMinutes,
+        sortOrder: editRow.sortOrder,
+        legacyUrl: editRow.imageUrl,
+        picked: editRow.imageMediaId
+          ? {
+              id: editRow.imageMediaId,
+              url: editRow.mediaKey ? mediaUrl(editRow.mediaKey) : null,
+              name: editRow.mediaName ?? "",
+              altText: editRow.mediaAlt ?? "",
+            }
+          : null,
+      }
     : null;
 
   return { list, editing };
@@ -51,14 +100,6 @@ const serviceInput = z.object({
     .int("Urutan harus bilangan bulat")
     .min(0, "Urutan minimal 0")
     .max(9999, "Urutan maksimal 9999"),
-  gambar: z
-    .string()
-    .trim()
-    .max(500, "URL gambar terlalu panjang")
-    .refine(
-      (v) => v === "" || /^https?:\/\//i.test(v),
-      "URL gambar harus diawali http:// atau https://"
-    ),
 });
 
 function slugify(name: string): string {
@@ -101,7 +142,6 @@ export async function action({ request }: Route.ActionArgs) {
     harga: form.get("harga") ?? "",
     durasi: form.get("durasi") ?? "",
     urutan: form.get("urutan") ?? "",
-    gambar: form.get("gambar") ?? "",
   });
 
   if (!parsed.success) {
@@ -114,17 +154,40 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const d = parsed.data;
-  const values = {
-    name: d.nama,
-    description: d.deskripsi,
-    price: d.harga,
-    durationMinutes: d.durasi,
-    sortOrder: d.urutan,
-    imageUrl: d.gambar || null,
-    updatedAt: new Date(),
-  };
 
   try {
+    // Gambar dari Media Library (opsional). Divalidasi ulang di server.
+    let mediaId: string | null = null;
+    const mediaRaw = String(form.get("gambarMediaId") ?? "");
+    if (mediaRaw) {
+      const mediaParsed = idSchema.safeParse(mediaRaw);
+      if (!mediaParsed.success) {
+        return fail("Periksa kembali isian kamu.", { gambar: "Gambar tidak valid." });
+      }
+      const [found] = await db
+        .select({ id: media.id })
+        .from(media)
+        .where(eq(media.id, mediaParsed.data))
+        .limit(1);
+      if (!found) {
+        return fail("Periksa kembali isian kamu.", {
+          gambar: "Gambar tidak ditemukan di Media.",
+        });
+      }
+      mediaId = found.id;
+    }
+
+    // image_url lama sengaja tidak disentuh (fallback selama migrasi)
+    const values = {
+      name: d.nama,
+      description: d.deskripsi,
+      price: d.harga,
+      durationMinutes: d.durasi,
+      sortOrder: d.urutan,
+      imageMediaId: mediaId,
+      updatedAt: new Date(),
+    };
+
     const idRaw = String(form.get("id") ?? "");
 
     if (idRaw) {
@@ -198,7 +261,7 @@ export default function AdminLayanan({
 
         <Form
           method="post"
-          key={editing?.id ?? "baru"}
+          key={editing?.id ?? `baru-${list.length}`}
           className="mt-4 grid gap-4 md:grid-cols-2"
         >
           <input type="hidden" name="intent" value="save" />
@@ -280,16 +343,13 @@ export default function AdminLayanan({
             <FieldError message={fe.urutan} />
           </div>
 
-          <div>
-            <label htmlFor="gambar" className="text-sm font-medium">URL gambar (opsional)</label>
-            <input
-              id="gambar"
-              name="gambar"
-              type="url"
-              defaultValue={editing?.imageUrl ?? ""}
-              className={inputClass}
+          <div className="md:col-span-2">
+            <p className="text-sm font-medium">Gambar</p>
+            <MediaPicker
+              initial={editing?.picked ?? null}
+              legacyUrl={editing?.legacyUrl ?? null}
+              error={fe.gambar}
             />
-            <FieldError message={fe.gambar} />
           </div>
 
           {actionData?.error && (
@@ -328,9 +388,10 @@ export default function AdminLayanan({
           </p>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-blush-100 bg-white">
-            <table className="w-full min-w-170 text-left text-sm">
+            <table className="w-full min-w-190 text-left text-sm">
               <thead className="border-b border-blush-100 text-xs uppercase tracking-wide text-plum-500">
                 <tr>
+                  <th className="px-4 py-3 font-medium">Gambar</th>
                   <th className="px-4 py-3 font-medium">Urutan</th>
                   <th className="px-4 py-3 font-medium">Layanan</th>
                   <th className="px-4 py-3 font-medium">Harga</th>
@@ -342,6 +403,13 @@ export default function AdminLayanan({
               <tbody className="divide-y divide-blush-100">
                 {list.map((s) => (
                   <tr key={s.id} className={s.isActive ? "" : "opacity-60"}>
+                    <td className="px-4 py-3">
+                      <ServiceImage
+                        src={s.thumb}
+                        alt={s.name}
+                        className="h-12 w-12 rounded-lg"
+                      />
+                    </td>
                     <td className="px-4 py-3">{s.sortOrder}</td>
                     <td className="px-4 py-3">
                       <span className="block font-medium">{s.name}</span>

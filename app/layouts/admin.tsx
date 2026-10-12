@@ -12,7 +12,8 @@ const adminNav = [
   { to: "/admin", label: "Dashboard", end: true },
   { to: "/admin/booking", label: "Booking", end: false },
   { to: "/admin/kalender", label: "Kalender", end: false },
-  { to: "/admin/layanan", label: "Layanan", end: false },
+    { to: "/admin/layanan", label: "Layanan", end: false },
+  { to: "/admin/media", label: "Media", end: false },
   { to: "/admin/jam-operasional", label: "Jam Operasional", end: false },
   { to: "/admin/pengaturan", label: "Pengaturan", end: false },
 ];

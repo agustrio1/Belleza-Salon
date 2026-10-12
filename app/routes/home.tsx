@@ -5,9 +5,12 @@ import {
   businessHours,
   businessSettings,
   db,
+  media,
   services,
 } from "~/db/index.server";
+import { serviceImageUrl } from "~/lib/service-image.server";
 import { formatRupiah, MAX_DAYS_AHEAD } from "~/lib/time";
+import { ServiceImage } from "~/components/service-image";
 
 export function meta() {
   return [
@@ -24,7 +27,7 @@ const DAY_NAMES = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu
 const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export async function loader() {
-  const [featured, hoursRows, settingsRows] = await Promise.all([
+  const [featuredRows, hoursRows, settingsRows] = await Promise.all([
     db
       .select({
         slug: services.slug,
@@ -32,8 +35,12 @@ export async function loader() {
         description: services.description,
         price: services.price,
         durationMinutes: services.durationMinutes,
+        imageUrl: services.imageUrl,
+        mediaKey: media.objectKey,
+        mediaAlt: media.altText,
       })
       .from(services)
+      .leftJoin(media, eq(services.imageMediaId, media.id))
       .where(eq(services.isActive, true))
       .orderBy(asc(services.sortOrder))
       .limit(4),
@@ -44,6 +51,16 @@ export async function loader() {
       .where(eq(businessSettings.id, 1))
       .limit(1),
   ]);
+
+  const featured = featuredRows.map((r) => ({
+    slug: r.slug,
+    name: r.name,
+    description: r.description,
+    price: r.price,
+    durationMinutes: r.durationMinutes,
+    image: serviceImageUrl(r.mediaKey, r.imageUrl),
+    imageAlt: r.mediaAlt || r.name,
+  }));
 
   const hours = DISPLAY_ORDER.map((day) => {
     const row = hoursRows.find((h) => h.dayOfWeek === day);
@@ -158,20 +175,27 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             {featured.map((s) => (
               <article
                 key={s.slug}
-                className="flex flex-col rounded-2xl border border-blush-100 bg-white p-5 shadow-soft"
+                className="flex flex-col overflow-hidden rounded-2xl border border-blush-100 bg-white shadow-soft"
               >
-                <h3 className="text-lg">{s.name}</h3>
-                <p className="mt-2 flex-1 text-sm text-plum-500">{s.description}</p>
-                <div className="mt-4">
-                  <p className="font-semibold">{formatRupiah(s.price)}</p>
-                  <p className="text-xs text-plum-500">{s.durationMinutes} menit</p>
+                <ServiceImage
+                  src={s.image}
+                  alt={s.imageAlt}
+                  className="aspect-4/3 w-full"
+                />
+                <div className="flex flex-1 flex-col p-5">
+                  <h3 className="text-lg">{s.name}</h3>
+                  <p className="mt-2 flex-1 text-sm text-plum-500">{s.description}</p>
+                  <div className="mt-4">
+                    <p className="font-semibold">{formatRupiah(s.price)}</p>
+                    <p className="text-xs text-plum-500">{s.durationMinutes} menit</p>
+                  </div>
+                  <Link
+                    to={`/booking?layanan=${s.slug}`}
+                    className="mt-4 rounded-full border border-blush-200 py-2 text-center text-sm font-medium transition-colors hover:bg-blush-50"
+                  >
+                    Pesan
+                  </Link>
                 </div>
-                <Link
-                  to={`/booking?layanan=${s.slug}`}
-                  className="mt-4 rounded-full border border-blush-200 py-2 text-center text-sm font-medium transition-colors hover:bg-blush-50"
-                >
-                  Pesan
-                </Link>
               </article>
             ))}
           </div>
