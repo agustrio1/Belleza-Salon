@@ -24,6 +24,8 @@ export default [
     route("admin/booking/:id", "routes/admin/booking-detail.tsx"),
     route("admin/kalender", "routes/admin/kalender.tsx"),
     route("admin/layanan", "routes/admin/layanan.tsx"),
+    route("admin/staf", "routes/admin/staff.tsx"),
+    route("admin/staf/:id", "routes/admin/staff-detail.tsx"),
     route("admin/media", "routes/admin/media.tsx"),
     route("admin/jam-operasional", "routes/admin/jam-operasional.tsx"),
     route("admin/pengaturan", "routes/admin/pengaturan.tsx"),

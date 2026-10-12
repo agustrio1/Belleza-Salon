@@ -3,6 +3,7 @@ import { and, desc, gte, ilike, lt, or, eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Route } from "./+types/booking";
 import { bookings, db } from "~/db/index.server";
+import { staff } from "~/db/schema";
 import { requireAdmin } from "~/lib/session.server";
 import { StatusBadge } from "~/components/status-badge";
 import { formatJam, formatRupiah, formatTanggal, isValidDateStr, jakartaToDate } from "~/lib/time";
@@ -40,6 +41,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       id: bookings.id,
       code: bookings.code,
       serviceName: bookings.serviceName,
+      staffName: staff.name,
       price: bookings.price,
       startsAt: bookings.startsAt,
       endsAt: bookings.endsAt,
@@ -47,6 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       status: bookings.status,
     })
     .from(bookings)
+    .leftJoin(staff, eq(bookings.staffId, staff.id))
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(desc(bookings.startsAt))
     .limit(100);
@@ -135,6 +138,7 @@ export default function AdminBooking({ loaderData }: Route.ComponentProps) {
                   <th className="px-4 py-3 font-medium">Kode</th>
                   <th className="px-4 py-3 font-medium">Pelanggan</th>
                   <th className="px-4 py-3 font-medium">Layanan</th>
+                  <th className="px-4 py-3 font-medium">Terapis</th>
                   <th className="px-4 py-3 font-medium">Jadwal</th>
                   <th className="px-4 py-3 font-medium">Harga</th>
                   <th className="px-4 py-3 font-medium">Status</th>
@@ -153,6 +157,9 @@ export default function AdminBooking({ loaderData }: Route.ComponentProps) {
                     </td>
                     <td className="px-4 py-3">{b.customerName}</td>
                     <td className="px-4 py-3">{b.serviceName}</td>
+                    <td className="px-4 py-3">
+                      {b.staffName ?? <span className="text-plum-500">-</span>}
+                    </td>
                     <td className="px-4 py-3">
                       <span className="block">{formatTanggal(b.startsAt)}</span>
                       <span className="text-xs text-plum-500">

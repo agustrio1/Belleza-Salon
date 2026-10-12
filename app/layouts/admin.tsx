@@ -15,6 +15,7 @@ const adminNav = [
     { to: "/admin/layanan", label: "Layanan", end: false },
   { to: "/admin/media", label: "Media", end: false },
   { to: "/admin/jam-operasional", label: "Jam Operasional", end: false },
+  { to: "/admin/staf", label: "Staff", end: false },
   { to: "/admin/pengaturan", label: "Pengaturan", end: false },
 ];
 

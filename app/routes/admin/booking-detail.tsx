@@ -3,6 +3,7 @@ import { asc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Route } from "./+types/booking-detail";
 import { bookings, bookingStatusHistory, db, users } from "~/db/index.server";
+import { staff } from "~/db/schema";
 import { requireAdmin } from "~/lib/session.server";
 import { StatusBadge, type BookingStatus } from "~/components/status-badge";
 import { formatJam, formatRupiah, formatTanggal } from "~/lib/time";
@@ -19,12 +20,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const id = idSchema.safeParse(params.id);
   if (!id.success) throw new Response("Booking tidak ditemukan", { status: 404 });
 
-  const [booking] = await db
-    .select()
+  const [row] = await db
+    .select({ booking: bookings, staffName: staff.name })
     .from(bookings)
+    .leftJoin(staff, eq(bookings.staffId, staff.id))
     .where(eq(bookings.id, id.data))
     .limit(1);
-  if (!booking) throw new Response("Booking tidak ditemukan", { status: 404 });
+  if (!row) throw new Response("Booking tidak ditemukan", { status: 404 });
+
+  const { booking, staffName } = row;
 
   const history = await db
     .select({
@@ -40,7 +44,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     .where(eq(bookingStatusHistory.bookingId, booking.id))
     .orderBy(asc(bookingStatusHistory.createdAt));
 
-  return { booking, history };
+  return { booking, staffName, history };
 }
 
 const transitions = {
@@ -140,7 +144,7 @@ export default function AdminBookingDetail({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
-  const { booking, history } = loaderData;
+  const { booking, staffName, history } = loaderData;
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
 
@@ -164,6 +168,7 @@ export default function AdminBookingDetail({
           <h2 className="text-lg">Reservasi</h2>
           <dl className="mt-4 space-y-2 text-sm">
             <Row label="Layanan">{booking.serviceName}</Row>
+            <Row label="Terapis">{staffName ?? "Tidak ditentukan"}</Row>
             <Row label="Tanggal">{formatTanggal(booking.startsAt)}</Row>
             <Row label="Jam">
               {formatJam(booking.startsAt)} – {formatJam(booking.endsAt)}

@@ -7,7 +7,8 @@ import {
   db,
   services,
 } from "~/db/index.server";
-import { getAvailableSlots } from "~/lib/availability.server";
+import { resolveSlot } from "~/lib/availability.server";
+import { isUuid } from "~/lib/staff.server";
 import {
   addDays,
   isValidDateStr,
@@ -28,6 +29,8 @@ export const bookingInput = z.object({
   layanan: z.string().min(1, "Pilih layanan"),
   tanggal: z.string().refine(isValidDateStr, "Pilih tanggal"),
   jam: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Pilih jam"),
+  // Kosong atau "any" = siapa saja. Selain itu harus ID staf.
+  staf: z.string().trim().max(40).optional(),
   nama: z
     .string()
     .trim()
@@ -51,6 +54,11 @@ const SLOT_TAKEN: Result = {
   error: "Maaf, slot itu baru saja diambil. Silakan pilih jam lain.",
 };
 
+const GENERIC_ERROR: Result = {
+  ok: false,
+  error: "Terjadi kesalahan. Silakan coba lagi.",
+};
+
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function generateCode(): string {
@@ -69,6 +77,63 @@ function pgCode(err: unknown): string | undefined {
   return undefined;
 }
 
+type InsertOutcome =
+  | { kind: "ok"; code: string }
+  | { kind: "taken" }
+  | { kind: "error" };
+
+type InsertParams = {
+  serviceId: string;
+  serviceName: string;
+  price: number;
+  durationMinutes: number;
+  staffId: string | null;
+  startsAt: Date;
+  endsAt: Date;
+  customerName: string;
+  customerPhone: string;
+  notes: string | null;
+};
+
+async function insertBooking(params: InsertParams): Promise<InsertOutcome> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const id = randomUUID();
+    const code = generateCode();
+    try {
+      await db.batch([
+        db.insert(bookings).values({
+          id,
+          code,
+          serviceId: params.serviceId,
+          staffId: params.staffId,
+          serviceName: params.serviceName,
+          price: params.price,
+          durationMinutes: params.durationMinutes,
+          startsAt: params.startsAt,
+          endsAt: params.endsAt,
+          customerName: params.customerName,
+          customerPhone: params.customerPhone,
+          notes: params.notes,
+        }),
+        db.insert(bookingStatusHistory).values({
+          bookingId: id,
+          fromStatus: null,
+          toStatus: "pending",
+          note: "Booking dibuat pelanggan",
+        }),
+      ]);
+      return { kind: "ok", code };
+    } catch (err) {
+      const pg = pgCode(err);
+      if (pg === "23P01") return { kind: "taken" }; // bentrok (exclusion constraint)
+      if (pg === "23505") continue; // kode bentrok, coba kode lain
+      console.error("createBooking gagal:", err);
+      return { kind: "error" };
+    }
+  }
+  return { kind: "error" };
+}
+
 export async function createBooking(input: BookingInput): Promise<Result> {
   const today = todayJakarta();
   if (input.tanggal < today || input.tanggal > addDays(today, MAX_DAYS_AHEAD)) {
@@ -82,48 +147,47 @@ export async function createBooking(input: BookingInput): Promise<Result> {
     .limit(1);
   if (!service) return { ok: false, error: "Layanan tidak tersedia." };
 
-  const slots = await getAvailableSlots(input.tanggal, service.durationMinutes);
-  if (!slots.includes(input.jam)) return SLOT_TAKEN;
+  // Pilihan staf: kosong atau "any" = siapa saja.
+  const chosen = input.staf ?? "";
+  let preferredStaffId: string | null = null;
+  if (chosen !== "" && chosen !== "any") {
+    if (!isUuid(chosen)) return { ok: false, error: "Staf tidak valid." };
+    preferredStaffId = chosen;
+  }
+
+  const slot = await resolveSlot(
+    input.tanggal,
+    input.jam,
+    service.durationMinutes,
+    { serviceId: service.id, staffId: preferredStaffId }
+  );
+  if (!slot.ok) return SLOT_TAKEN;
 
   const startsAt = jakartaToDate(input.tanggal, input.jam);
   const endsAt = new Date(startsAt.getTime() + service.durationMinutes * 60 * 1000);
   const phone = normalizePhone(input.whatsapp);
   if (!phone) return { ok: false, error: "Nomor WhatsApp tidak valid." };
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const id = randomUUID();
-    const code = generateCode();
-    try {
-      await db.batch([
-        db.insert(bookings).values({
-          id,
-          code,
-          serviceId: service.id,
-          serviceName: service.name,
-          price: service.price,
-          durationMinutes: service.durationMinutes,
-          startsAt,
-          endsAt,
-          customerName: input.nama,
-          customerPhone: phone,
-          notes: input.catatan || null,
-        }),
-        db.insert(bookingStatusHistory).values({
-          bookingId: id,
-          fromStatus: null,
-          toStatus: "pending",
-          note: "Booking dibuat pelanggan",
-        }),
-      ]);
-      return { ok: true, code };
-    } catch (err) {
-      const pg = pgCode(err);
-      if (pg === "23P01") return SLOT_TAKEN; // bentrok (exclusion constraint)
-      if (pg === "23505") continue; // kode bentrok, coba kode lain
-      console.error("createBooking gagal:", err);
-      return { ok: false, error: "Terjadi kesalahan. Silakan coba lagi." };
-    }
+  // Coba staf berurutan. Kalau satu staf keburu diambil orang lain
+  // (ditolak constraint), lanjut ke staf kosong berikutnya.
+  for (const staffId of slot.staffIds) {
+    const outcome = await insertBooking({
+      serviceId: service.id,
+      serviceName: service.name,
+      price: service.price,
+      durationMinutes: service.durationMinutes,
+      staffId,
+      startsAt,
+      endsAt,
+      customerName: input.nama,
+      customerPhone: phone,
+      notes: input.catatan || null,
+    });
+
+    if (outcome.kind === "ok") return { ok: true, code: outcome.code };
+    if (outcome.kind === "error") return GENERIC_ERROR;
+    // "taken": coba staf berikutnya
   }
 
-  return { ok: false, error: "Terjadi kesalahan. Silakan coba lagi." };
+  return SLOT_TAKEN;
 }
